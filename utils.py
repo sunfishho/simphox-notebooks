@@ -5,7 +5,7 @@ import tensorflow as tf
 from keras.models import Sequential
 from keras.layers import Activation, Lambda
 from keras import backend as K
-from keras.datasets import mnist, fashion_mnist
+from keras.datasets import mnist, fashion_mnist, cifar10
 from dataclasses import dataclass
 import holoviews as hv
 
@@ -71,6 +71,48 @@ class MNISTDataProcessor:
             units=p ** 2,
             num_classes=10
         )
+
+class CIFARTenDataProcessor:
+    def __init__(self):
+        (self.x_train_raw, self.y_train), (self.x_test_raw, self.y_test) = cifar10.load_data()
+        self.x_train_raw = np.mean(self.x_train_raw, axis = -1)
+        self.x_test_raw = np.mean(self.x_test_raw, axis = -1)
+        self.num_train = self.x_train_raw.shape[0]
+        self.num_test = self.x_test_raw.shape[0]
+        self.x_train_ft = np.fft.fftshift(np.fft.fft2(self.x_train_raw), axes=(1, 2))
+        self.x_test_ft = np.fft.fftshift(np.fft.fft2(self.x_test_raw), axes=(1, 2))
+        self.y_train = np.squeeze(self.y_train)
+        self.y_test = np.squeeze(self.y_test)
+        
+    def fourier(self, freq_radius):
+        min_r, max_r = 16 - freq_radius, 16 + freq_radius
+        x_train_ft = self.x_train_ft[:, min_r:max_r, min_r:max_r]
+        x_test_ft = self.x_test_ft[:, min_r:max_r, min_r:max_r]
+        return ONNData(
+            x_train=norm_inputs(x_train_ft.reshape((self.num_train, -1))).astype(np.complex64),
+            y_train=np.eye(10)[self.y_train],
+            y_train_ind=self.y_train,
+            x_test=norm_inputs(x_test_ft.reshape((self.num_test, -1))).astype(np.complex64),
+            y_test=np.eye(10)[self.y_test],
+            y_test_ind=self.y_test,
+            units=(2 * freq_radius)**2,
+            num_classes=10
+        )
+    
+    def resample(self, p, b=0):
+        m = 32 - b * 2
+        min_r, max_r = b, 32 - b
+        x_train_ft = sp.ndimage.zoom(self.x_train_raw[:, min_r:max_r, min_r:max_r], (1, p / m, p / m))
+        x_test_ft = sp.ndimage.zoom(self.x_test_raw[:, min_r:max_r, min_r:max_r], (1, p / m, p / m))
+        return ONNData(
+            x_train=norm_inputs(x_train_ft.reshape((self.num_train, -1)).astype(np.complex64)),
+            y_train=np.eye(10)[self.y_train],
+            x_test=norm_inputs(x_test_ft.reshape((self.num_test, -1)).astype(np.complex64)),
+            y_test=np.eye(10)[self.y_test],
+            units=p ** 2,
+            num_classes=10
+        )
+
 
 @dataclass
 class Metrics:
