@@ -54,7 +54,7 @@ def main(args):
         accs = maml(x_spt, y_spt, x_qry, y_qry)
 
         if step % 10 == 0:
-            torch.save(maml.net.state_dict(), 'huh.pth')
+            torch.save(maml.net.state_dict(), 'v2_onn_omniglot_maml.pth')
         if step % 50 == 0:
             print('step:', step, '\ttraining acc:', accs)
 
@@ -79,7 +79,7 @@ def main(args):
 if __name__ == '__main__':
 
     argparser = argparse.ArgumentParser()
-    argparser.add_argument('--epoch', type=int, help='epoch number', default=40000)
+    argparser.add_argument('--epoch', type=int, help='epoch number', default=1000)
     argparser.add_argument('--n_way', type=int, help='n way', default=5)
     argparser.add_argument('--k_spt', type=int, help='k shot for support set', default=1)
     argparser.add_argument('--k_qry', type=int, help='k shot for query set', default=15)

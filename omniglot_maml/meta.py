@@ -8,7 +8,6 @@ import  numpy as np
 from torchonn.op.mzi_op import project_matrix_to_unitary
 from    learner import Learner
 from    copy import deepcopy
-import pdb
 
 
 
@@ -124,11 +123,7 @@ class Meta(nn.Module):
 
             for k in range(1, self.update_step):
                 # 1. run the i-th task and compute loss for k=1~K-1
-                if k > 2:
-                    pdb.set_trace()
                 logits = self.net(x_spt[i], fast_weights, bn_training=True)
-                if k > 2:
-                    pdb.set_trace()
                 loss = F.cross_entropy(logits, y_spt[i])
                 # 2. compute grad on theta_pi
                 grad = torch.autograd.grad(loss, fast_weights)
@@ -156,6 +151,7 @@ class Meta(nn.Module):
         self.meta_optim.zero_grad()
         loss_q.backward()
         self.meta_optim.step()
+        self.net.project_fast_weights()
 
 
         accs = np.array(corrects) / (querysz * task_num)
