@@ -14,7 +14,7 @@ class Learner(nn.Module):
 
     """
 
-    def __init__(self, config, imgc, imgsz):
+    def __init__(self, config, imgc, imgsz, mb):
         """
 
         :param config: network config file, type:list of (string, list)
@@ -48,7 +48,7 @@ class Learner(nn.Module):
                     decompose_alg="clements",
                     photodetect=True,
                     device=torch.device('cpu'),
-                    miniblock = 1,
+                    miniblock = mb,
                 )
                 conv_layer.reset_parameters()
                 self.conv_layers.append(conv_layer)
@@ -62,7 +62,7 @@ class Learner(nn.Module):
                     in_features=param[1],
                     out_features=param[0],
                     bias=True,
-                    miniblock=1,
+                    miniblock=mb,
                     mode="usv",
                     decompose_alg="clements",
                     photodetect=True,
@@ -92,6 +92,18 @@ class Learner(nn.Module):
                 continue
             else:
                 raise NotImplementedError
+
+    def project_fast_weights(self):
+        idx = 0
+        for name, param in self.config:
+            if name == 'conv2d' or name == 'linear':
+                # project U to unitary
+                with torch.no_grad():
+                    self.parameters()[idx].copy_(project_matrix_to_unitary(self.parameters()[idx]))
+                    self.parameters()[idx+2].copy_(project_matrix_to_unitary(self.parameters()[idx+2]))
+                idx += 4
+            elif name == 'bn':
+                idx += 2
 
     def forward(self, x, vars=None, bn_training=True):
         """

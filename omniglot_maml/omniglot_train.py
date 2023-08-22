@@ -6,9 +6,9 @@ from    meta import Meta
 
 def main(args):
 
-    torch.manual_seed(222)
-    torch.cuda.manual_seed_all(222)
-    np.random.seed(222)
+    torch.manual_seed(12)
+    torch.cuda.manual_seed_all(12)
+    np.random.seed(12)
 
     print(args)
 
@@ -54,7 +54,7 @@ def main(args):
         accs = maml(x_spt, y_spt, x_qry, y_qry)
 
         if step % 10 == 0:
-            torch.save(maml.net.state_dict(), 'v2_onn_omniglot_maml.pth')
+            torch.save(maml.net.state_dict(), 'onn_omniglot_maml_mb=16.pth')
         if step % 50 == 0:
             print('step:', step, '\ttraining acc:', accs)
 
